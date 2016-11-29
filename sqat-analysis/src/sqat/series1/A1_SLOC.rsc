@@ -3,6 +3,8 @@ module sqat::series1::A1_SLOC
 import IO;
 import util::FileSystem;
 
+import String;
+
 /* 
 
 Count Source Lines of Code (SLOC) per file:
@@ -38,6 +40,18 @@ SLOC sloc(loc project) {
   SLOC result = ();
   
   // to be done
+  
+  // project = |project://jpacman-framework/src|;
+  
+  F = crawl(project);
+  
+  for (/file(f) := F) {
+  	if (f.extension != "java")
+  		continue;
+  		
+  	rawfile = readFile(f);
+  	
+  }
   
   return result;
 }

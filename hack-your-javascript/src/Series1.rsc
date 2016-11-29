@@ -49,10 +49,10 @@ test bool testAtField()
  * 2. Twitter search expressions
  */
 Expression desugar((Expression)`@(<{Expression ","}* es>)`) 
-  = /* you should replace this */ dummyExp();
+  = (Expression)`searchAt(<{Expression ","}* es>)`;
 
 Expression desugar((Expression)`#(<{Expression ","}* es>)`)
-  = /* you should replace this */ dummyExp();  
+  = (Expression)`searchHash(<{Expression ","}* es>)`;
 
 test bool testTwitter()
   = desugar((Expression)`@("obama")`) 
@@ -62,7 +62,7 @@ test bool testTwitter()
  * 3. Don't statement
  */
 
-Statement desugar((Statement)`dont <Statement _>`) = /* you should replace this */ dummyStat();
+Statement desugar((Statement)`dont <Statement _>`) = (Statement)`;`;
 
 test bool testDont()
   = desugar((Statement)`dont if (x == 3) print(x);`) 
@@ -73,7 +73,7 @@ test bool testDont()
  */
 
 Statement desugar((Statement)`todo <String s>;`) 
-  = /* you should replace this */ dummyStat(); 
+  = (Statement)`console.log("TODO: " + <String s>);`;
  
  
 test bool testTodo()
@@ -85,7 +85,7 @@ test bool testTodo()
  */
  
 Statement desugar((Statement)`unless (<Expression cond>) <Statement body>`)
-  = /* you should replace this */ dummyStat();
+  = (Statement)`if (!(<Expression cond>)) <Statement body>`;
  
 
 test bool testUnless()
@@ -97,7 +97,7 @@ test bool testUnless()
  */
 
 Statement desugar((Statement)`repeat <Statement stat> until (<Expression cond>);`)
-  = /* you should replace this */ dummyStat();
+  = (Statement)`do <Statement stat> while (!(<Expression cond>));`;
 
 test bool testRepeat()
   = desugar((Statement)`repeat {print(i); i--;} until (i == 0);`)
@@ -110,15 +110,16 @@ test bool testRepeat()
 
 Statement desugar((Statement)`assert <Expression e>: <String msg>;`) {
   // don't forget to convert the expression to a string!
-  return /* you should replace this */ dummyStat();
+  return (Statement)`if (!(<Expression e>))
+  '  throw "Assertion " + jsString(<Expression e>) + " failed: " + <String msg>;`;
 }
 
 
 test bool testAssert()
   = desugar((Statement)`assert x != null: "x should not be null";`)
   == (Statement)`if (!(x != null))
-                '  throw "Assertion " + "x != null" + " failed: " + "x should not be null";`;
-  
+'  throw "Assertion " + "x != null" + " failed: " + "x should not be null";`;
+
 String jsString(Expression e) = parse(#String, "\"<unparse(e)>\""); 
 
 

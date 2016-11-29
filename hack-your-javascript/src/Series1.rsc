@@ -38,7 +38,7 @@ test bool testDebug()
 /*
  * 1. At fields
  */ 
-Expression desugar((Expression)`@<Id x>`) = /* you should replace this */ dummyExp();
+Expression desugar((Expression)`@<Id x>`) = (Expression)`this.<Id x>`;
 
 test bool testAtField() 
   = desugar((Expression)`@name`) 

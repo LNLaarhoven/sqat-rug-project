@@ -50,12 +50,12 @@ SLOC sloc(loc project) {
 	
   	bool multiline = false;
   	
-  	for (line <- fileLines) {
+  	for (line <- fileLines, !isEmpty(trim(line))) {
   	
   		if (/[\/\*][\s]*/ := line)
   			multiline = true;
   		
-  		if (/[\/\/][\s]*/ := line || multiline)
+  		if (/[\/\/][\s]*/ !:= line && !multiline)
   			result[f] += 1;
   		
   		if (/[\*\/][\s]*/ := line)

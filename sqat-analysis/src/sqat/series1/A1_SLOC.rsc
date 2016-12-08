@@ -36,22 +36,32 @@ Bonus:
 
 alias SLOC = map[loc file, int sloc];
 
+// |project://jpacman-framework/src|
 SLOC sloc(loc project) {
   SLOC result = ();
-  
-  // to be done
-  
-  // project = |project://jpacman-framework/src|;
-  
   F = crawl(project);
   
   for (/file(f) := F) {
   	if (f.extension != "java")
   		continue;
-  		
-  	rawfile = readFile(f);
   	
-  }
+	fileLines = readFileLines(f);
+	result[f] = 0;
+	
+  	bool multiline = false;
+  	
+  	for (line <- fileLines) {
+  	
+  		if (/[\/\*][\s]*/ := line)
+  			multiline = true;
+  		
+  		if (/[\/\/][\s]*/ := line || multiline)
+  			result[f] += 1;
+  		
+  		if (/[\*\/][\s]*/ := line)
+  			multiline = false;
+  	}
   
+  }
   return result;
 }

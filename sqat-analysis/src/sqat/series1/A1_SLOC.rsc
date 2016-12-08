@@ -52,13 +52,13 @@ SLOC sloc(loc project) {
   	
   	for (line <- fileLines, !isEmpty(trim(line))) {
   	
-  		if (/[\/\*][\s]*/ := line)
+  		if (/\/\*/ := line)
   			multiline = true;
   		
-  		if (/[\/\/][\s]*/ !:= line && !multiline)
+  		if (/\/\// !:= line && !multiline)
   			result[f] += 1;
   		
-  		if (/[\*\/][\s]*/ := line)
+  		if (/\*\// := line)
   			multiline = false;
   	}
   

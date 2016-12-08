@@ -4,6 +4,9 @@ import IO;
 import util::FileSystem;
 
 import String;
+import List;
+import ValueIO;
+import Tuple;
 
 /* 
 
@@ -33,17 +36,20 @@ Bonus:
   (https://en.wikipedia.org/wiki/Treemapping) 
 
 */
+alias fileAndSize = tuple[loc,int];
+loc largestFile(loc project) {
+	fileSzPairs = [ <f, getFileLength(f)> | /file(f) := crawl(project), f.extension == "java" ];
+	bool sortOnSize(fileAndSize a, fileAndSize b) { return a[1] > b[1]; };
+	return head([ x | x <- sort(fileSzPairs, sortOnSize) ])[0];
+}
 
 alias SLOC = map[loc file, int sloc];
 
 // |project://jpacman-framework/src|
 SLOC sloc(loc project) {
   SLOC result = ();
-  F = crawl(project);
   
-  for (/file(f) := F) {
-  	if (f.extension != "java")
-  		continue;
+  for (/file(f) := crawl(project), f.extension == "java") {
   	
 	fileLines = readFileLines(f);
 	result[f] = 0;

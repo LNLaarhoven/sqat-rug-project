@@ -40,7 +40,7 @@ alias fileAndSize = tuple[loc,int];
 loc largestFile(loc project) {
 	fileSzPairs = [ <f, getFileLength(f)> | /file(f) := crawl(project), f.extension == "java" ];
 	bool sortOnSize(fileAndSize a, fileAndSize b) { return a[1] > b[1]; };
-	return head([ x | x <- sort(fileSzPairs, sortOnSize) ])[0];
+	return head(sort(fileSzPairs, sortOnSize))[0];
 }
 
 alias SLOC = map[loc file, int sloc];

@@ -2,6 +2,9 @@ module sqat::series1::A3_CheckStyle
 
 import lang::java::\syntax::Java15;
 import Message;
+import util::FileSystem;
+import String;
+import IO;
 
 /*
 
@@ -40,12 +43,53 @@ Bonus:
 - write simple "refactorings" to fix one or more classes of violations 
 
 */
+bool checkAvoidStarImport(str importString) {
+	
+	if (contains(importString, ".*"))
+		return true;
+	else
+		return false;
+}
+
+bool checkLineLength(str line) {
+	if (size(line) > 100)
+		return true;
+	else
+		return false;
+}
+
+bool checkOneStatementPerLine(str line) {
+	if(!startsWith(line, "for") && findFirst(line, ";") != findLast(line, ";"))
+		return true;
+	else
+		return false;  
+}
 
 set[Message] checkStyle(loc project) {
   set[Message] result = {};
   
   // to be done
   // implement each check in a separate function called here. 
+  for (/file(f) := crawl(project), f.extension == "java") {
+  	
+	fileLines = readFileLines(f);
+	int lineNumber = 1;
+	
+	for (line <- fileLines) {
+  		
+  		if (startsWith(trim(line), "import ") && checkAvoidStarImport(line))
+  			result += warning("Avoid star characters in import statement in line <lineNumber>", f);
+  		
+  		if (checkLineLength(line))
+  			result += warning("Line <lineNumber> exceeds the 100 character limit, please shorten or cut the line", f);
+  		
+  		if (checkOneStatementPerLine(trim(line)))
+  			result += warning("There is more than one statement on line <lineNumber>", f);		
+  			
+  		lineNumber += 1; 
+  	}
+	
+  }  
   
   return result;
 }

@@ -45,29 +45,31 @@ loc largestFile(loc project) {
 
 alias SLOC = map[loc file, int sloc];
 
-// |project://jpacman-framework/src|
-SLOC sloc(loc project) {
-  SLOC result = ();
-  
-  for (/file(f) := crawl(project), f.extension == "java") {
+int getSLOC(list[str] lines) {
+	int result = 0;
+	bool multiline = false;
   	
-	fileLines = readFileLines(f);
-	result[f] = 0;
-	
-  	bool multiline = false;
-  	
-  	for (line <- fileLines, !isEmpty(trim(line))) {
+	for (line <- lines, !isEmpty(trim(line))) {
   	
   		if (/\/\*/ := line)
-  			multiline = true;
-  		
+			multiline = true;
+
   		if (/\/\// !:= line && !multiline)
-  			result[f] += 1;
+			result += 1;
   		
   		if (/\*\// := line)
   			multiline = false;
   	}
-  
-  }
-  return result;
+	return result;
+}
+
+// |project://jpacman-framework/src|
+SLOC sloc(loc project) {
+	SLOC result = ();
+
+	for (/file(f) := crawl(project), f.extension == "java") {
+		fileLines = readFileLines(f);
+		result[f] = getSLOC(fileLines);
+	}
+	return result;
 }

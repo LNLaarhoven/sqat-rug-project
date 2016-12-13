@@ -18,7 +18,12 @@ Construct a distribution of method cylcomatic complexity.
 Questions:
 - which method has the highest complexity (use the @src annotation to get a method's location)
 
+	getHighestComplexityMethod(cc(jpacmanASTs())) returns the method with the highest CC value.
+
 - how does pacman fare w.r.t. the SIG maintainability McCabe thresholds?
+	The paper indicates that a CC between 1 and 10 is simple code without much risk. All methods
+	within the JPacman project falls in this range.
+	ccDist(cc(jpacmanASTs())) shows the distribution of CCs for the methods in JPacman.
 
 - is code size correlated with McCabe in this case (use functions in analysis::statistics::Correlation to find out)? 
   (Background: Davy Landman, Alexander Serebrenik, Eric Bouwers and Jurgen J. Vinju. Empirical analysis 
@@ -50,13 +55,14 @@ int visitStatements(Statement impl) {
 
 	visit(impl) {
 		case \if(cond, ifBranch):		cc += 1;
-		case \if(cond, _, elseBranch):	cc += 1;
+		case \if(cond, _, elseBranch):	cc += 2; // Also count else-branch as an independent path
 		case \while(cond, body):		cc += 1;
 		case \for(_, cond, _, body):	cc += 1;
 		case \for(_, _, body):			cc += 1;
 		case \foreach(_, _, body):		cc += 1;
 		case \catch(_, body):			cc += 1;
 		case \case(_):					cc += 1;
+		case \defaultCase():			cc += 1;
 		case \infix(lhs, "&&", rhs):	cc += 1;
 		case \infix(lhs, "||", rhs):	cc += 1;
 	}
@@ -102,6 +108,6 @@ lrel[int, int] findRelation(set[Declaration] decls) {
 	for (<x,y> <- cc(decls)) {
 		res += <getSLOC(readFileLines(x)), y>;
 	}
-	//PearsonsCorrelationPValues(res);
+	PearsonsCorrelationPValues(res);
 	return res;
 }

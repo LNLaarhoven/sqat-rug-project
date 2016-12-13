@@ -7,7 +7,7 @@ import Set;
 import List;
 
 import sqat::series1::A1_SLOC;
-import analysis::statistics::Correlation;
+//import analysis::statistics::Correlation;
 
 /*
 
@@ -108,6 +108,6 @@ lrel[int, int] findRelation(set[Declaration] decls) {
 	for (<x,y> <- cc(decls)) {
 		res += <getSLOC(readFileLines(x)), y>;
 	}
-	PearsonsCorrelationPValues(res);
+	//PearsonsCorrelationPValues(res);
 	return res;
 }

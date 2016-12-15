@@ -111,3 +111,23 @@ lrel[int, int] findRelation(set[Declaration] decls) {
 	//PearsonsCorrelationPValues(res);
 	return res;
 }
+
+
+
+rel[str methodName, int cc] testResults() {
+	rel[str methodName, int cc] result = {};
+
+	visit({ createAstFromFile(|project://sqat-analysis/src/sqat/series1/A2Test.java|, true) }) {
+		case m: \method(_, name, _, _, impl):
+			result += <name, visitStatements(impl)>;
+	}
+
+	return result;
+}
+
+test bool nestedTest() = testResults()["nested"] == {4};
+test bool ifElseTest() = testResults()["if_else"] == {2};
+test bool switchTest() = testResults()["switch_case"] == {5};
+test bool infixSimpleTest() = testResults()["infix_simple"] == {3};
+test bool infixComplexTest() = testResults()["infix_complex"] == {5};
+test bool tryCatchTest() = testResults()["try_catch"] == {2};

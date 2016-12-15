@@ -55,7 +55,7 @@ int visitStatements(Statement impl) {
 
 	visit(impl) {
 		case \if(cond, ifBranch):		cc += 1;
-		case \if(cond, _, elseBranch):	cc += 2; // Also count else-branch as an independent path
+		case \if(cond, _, elseBranch):	cc += 1;
 		case \while(cond, body):		cc += 1;
 		case \for(_, cond, _, body):	cc += 1;
 		case \for(_, _, body):			cc += 1;

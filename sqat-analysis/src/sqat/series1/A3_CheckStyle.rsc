@@ -43,9 +43,8 @@ Bonus:
 - write simple "refactorings" to fix one or more classes of violations 
 
 */
-bool checkAvoidStarImport(str importString) {
-	
-	if (contains(importString, ".*"))
+bool checkAvoidStarImport(str line) {
+	if (startsWith(line, "import ") && contains(line, ".*"))
 		return true;
 	else
 		return false;
@@ -84,20 +83,22 @@ set[Message] checkStyle(loc project) {
 	
 	for (line <- fileLines) {
   		
-  		if (startsWith(trim(line), "import ") && checkAvoidStarImport(line))
-  			result += warning("Avoid star characters in import statement in line <lineNumber>", f);
-  		
   		if (checkLineLength(line))
   			result += warning("Line <lineNumber> exceeds the 100 character limit, please shorten" +
   								" or cut the line", f);
   		
-  		if (checkOneStatementPerLine(trim(line)))
+  		line = trim(line);
+  		
+  		if (checkAvoidStarImport(line))
+  			result += warning("Avoid star characters in import statement in line <lineNumber>", f);
+  		
+  		if (checkOneStatementPerLine(line))
   			result += warning("There is more than one statement on line <lineNumber>", f);		
   		
-  		if (checkPublicFields(trim(line)))
+  		if (checkPublicFields(line))
   			result += warning("There are public fields defined on line <lineNumber> that you " +
   								"might want to change to private fields", f);
-  			
+  		
   		lineNumber += 1; 
   	}
 	

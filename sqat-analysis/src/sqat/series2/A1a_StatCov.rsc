@@ -2,6 +2,11 @@ module sqat::series2::A1a_StatCov
 
 import lang::java::jdt::m3::Core;
 
+import analysis::m3::Core;
+import IO;
+import Set;
+import util::Math;
+
 /*
 
 Implement static code coverage metrics by Alves & Visser 
@@ -44,6 +49,44 @@ Questions:
 
 */
 
+M3 jpacmanM3() = createM3FromEclipseProject(|project://jpacman-framework/src|);
 
-M3 jpacmanM3() = createM3FromEclipseProject(|project://jpacman|);
+alias Graph = rel[loc, str, loc];
+
+bool isFunction(loc artifact) 				= artifact.scheme == "java+method" || artifact.scheme == "java+constructor";
+bool isClass(loc artifact) 					= artifact.scheme == "java+class";
+bool isTestAnnotation(set[loc] annotation) 	= |java+interface:///org/junit/Test| in annotation;
+
+set[loc] getClassMethods(M3 model, loc class) {
+	return { member.from | member <- model@containment[class], isFunction(member.from) };
+}
+
+set[loc] get(M3 model, bool (loc artifact) what) = { artifact.name | artifact <- model@declarations, what(artifact.name) };
+set[loc] getAllClasses(M3 model) = get(model, isClass);
+set[loc] getAllMethods(M3 model) = get(model, isFunction);
+
+set[loc] filterMethods(M3 model, bool testMethods) = { method | method <- get(model, isFunction),
+	testMethods == isTestAnnotation(model@annotations[method]) };
+
+set[loc] getAllTestMethods(M3 model) = filterMethods(model, true);
+set[loc] getNonTestMethods(M3 model) = filterMethods(model, false);
+
+set[loc] getTestedMethods(M3 model) {
+	set[loc] tested = getAllTestMethods(model);
+
+	Graph callGraph = { <from, "calls", to> | <from, to> <- model@methodInvocation };
+
+	return solve (tested) {
+		tested += { * callGraph[method]["calls"] | method <- tested };
+	}
+}
+
+real calculateClassCoverage(M3 model, loc class, set[loc] allTestedMethods) {
+	classMethods = getClassMethods(model, class);
+	return 100 * toReal(size(allTestedMethods & classMethods)) / size(classMethods);
+}
+
+real calculateTotalCoverage(M3 model) {
+	return 100 * toReal(size(getTestedMethods(model))) / size(getNonTestMethods(model));
+}
 

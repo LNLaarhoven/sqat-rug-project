@@ -55,7 +55,7 @@ alias Graph = rel[loc, str, loc];
 
 bool isFunction(loc artifact) 				= artifact.scheme == "java+method" || artifact.scheme == "java+constructor";
 bool isClass(loc artifact) 					= artifact.scheme == "java+class";
-bool isTestAnnotation(set[loc] annotation) 	= |java+interface:///org/junit/Test| in annotation;
+bool isTestAnnotation(set[loc] annotation) 	= |java+interface:///org/junit| in { a.parent | a <- annotation };
 
 set[loc] getClassMethods(M3 model, loc class) {
 	return { member | member <- model@containment[class], isFunction(member) };

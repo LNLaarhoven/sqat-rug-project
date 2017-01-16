@@ -71,6 +71,9 @@ set[loc] filterMethods(M3 model, bool testMethods) = { method | method <- get(mo
 set[loc] getAllTestMethods(M3 model) = filterMethods(model, true);
 set[loc] getNonTestMethods(M3 model) = filterMethods(model, false);
 
+bool hasOnlyTestMethods(M3 model, loc class) = size({ m | m <- getClassMethods(model, class),
+	!isTestAnnotation(model@annotations[m]) }) == 0;
+
 set[loc] getTestedMethods(M3 model) {
 	set[loc] tested = getAllTestMethods(model);
 
@@ -88,5 +91,11 @@ real calculateClassCoverage(M3 model, loc class, set[loc] allTestedMethods) {
 
 real calculateTotalCoverage(M3 model) {
 	return 100 * toReal(size(getTestedMethods(model))) / size(getNonTestMethods(model));
+}
+
+rel[loc, real] calculateTotalCoveragePerClass(M3 model) {
+	set[loc] tested = getTestedMethods(model);
+	return { <class, calculateClassCoverage(model, class, tested)> | class <- getAllClasses(model),
+		!hasOnlyTestMethods(model, class) };
 }
 

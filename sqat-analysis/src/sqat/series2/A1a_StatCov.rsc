@@ -58,7 +58,7 @@ bool isClass(loc artifact) 					= artifact.scheme == "java+class";
 bool isTestAnnotation(set[loc] annotation) 	= |java+interface:///org/junit/Test| in annotation;
 
 set[loc] getClassMethods(M3 model, loc class) {
-	return { member.from | member <- model@containment[class], isFunction(member.from) };
+	return { member | member <- model@containment[class], isFunction(member) };
 }
 
 set[loc] get(M3 model, bool (loc artifact) what) = { artifact.name | artifact <- model@declarations, what(artifact.name) };

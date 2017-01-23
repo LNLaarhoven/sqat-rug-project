@@ -6,6 +6,9 @@ import Message;
 import ParseTree;
 import IO;
 
+import String;
+import ToString;
+import Set;
 
 /*
 
@@ -58,17 +61,109 @@ Questions
   of Dicto (and explain why you'd need them). 
 */
 
-
 set[Message] eval(start[Dicto] dicto, M3 m3) = eval(dicto.top, m3);
 
 set[Message] eval((Dicto)`<Rule* rules>`, M3 m3) 
   = ( {} | it + eval(r, m3) | r <- rules );
-  
-set[Message] eval(Rule rule, M3 m3) {
-  set[Message] msgs = {};
-  
-  // to be done
-  
-  return msgs;
+
+
+bool validate(loc artifact, Modality m, set[loc] artifacts) {
+
+	switch (toString(m)) {
+		case "must": 		return artifact in artifacts;
+		case "cannot": 		return artifact notin artifacts;
+		case "may": 		return true;
+		case "can only":	return validate(artifact, (Modality)`must`, artifacts)
+									&& size(artifacts) == 1;
+	}
 }
 
+set[loc] getImports(loc javaFile) = { |java+class:///| + replaceAll(name, ".", "/")
+	| l <- readFileLines(javaFile), /\s*import\s*<name:[\w|\.]*>;/ := l };
+
+loc getFileFromDecl(loc artifact, M3 m3) = [ |file:///| + a.path | a <- m3@declarations[artifact] ][0];
+
+bool evalImport(loc e1, loc e2, Modality m, M3 m3) 	= validate(e2, m, getImports(getFileFromDecl(e1, m3)));
+bool evalDepend(loc e1, loc e2, Modality m, M3 m3) 	= validate(e2, m, m3@typeDependency[e1]);
+bool evalInherit(loc e1, loc e2, Modality m, M3 m3)	= validate(e2, m, m3@extends[e1]);
+
+bool evalInvoke(Entity e1, loc e2, Modality m, M3 m3) {
+
+	e1loc = getLoc(e1, m3);
+
+	if (e1 is method) {
+		return validate(e2, m, m3@methodInvocation[e1loc]);
+	}
+
+	if (e1 is class) {
+		return validate(e2, m, { *m3@methodInvocation[e1s] | e1s <- m3@containment[e1loc], isFunction(e1s) });
+	}
+}
+
+bool evalInstantiate(Entity e1, Entity e2, Modality m, M3 m3) {
+	set[loc] e2ctors = m3@names[ split(".", toString(e2))[-1] ];
+
+	allCtorCalls = { evalInvoke(e1, e, m, m3) | e <- e2ctors};
+
+	switch (toString(m)) {
+		case "must": 		return (false 	| it || i | bool i <- allCtorCalls); // Any of the ctors should be invoked
+		case "cannot": 		return (true 	| it && i | bool i <- allCtorCalls); // None of the ctors should be invoked
+		case "may":			return true;
+		case "can only": 	return (false 	| it || i | bool i <- allCtorCalls)
+									&& size(allCtorCalls) == 1;
+	}
+
+}
+
+set[Message] eval(Rule rule, M3 m3) {
+	set[Message] msgs = {};
+
+	// to be done
+	if ((Rule)`<Entity e1> <Modality m> <Relation r> <Entity e2>` := rule) {
+
+		loc e1loc = getLoc(e1, m3);
+		loc e2loc = getLoc(e2, m3);
+		bool pass = true;
+
+		switch (toString(r)) {
+
+			case "import": 		pass = evalImport(e1loc, e2loc, m, m3);
+			case "depend": 		pass = evalDepend(e1loc, e2loc, m, m3);
+			case "invoke": 		pass = evalInvoke(e1, e2loc, m, m3);
+			case "instantiate":	pass = evalInstantiate(e1, e2, m, m3);
+			case "inherit": 	pass = evalInherit(e1loc, e2loc, m, m3);
+
+		}
+
+		if (!pass) msgs += warning(toString(rule), e1loc);
+
+	} else {
+		println("invalid rule: " + toString(rule));
+	}
+
+	return msgs;
+}
+
+loc getLoc(Entity e, M3 m3) {
+
+	str slashedName = replaceAll(toString(e), ".", "/");
+
+	if (e is class)
+		return |java+class:///| + slashedName;
+
+	if (e is method) {
+		set[loc] fullNames = m3@names[ split("::", toString(e))[-1] ];
+
+		// Constructors too, perhaps?
+		slashedLoc = |java+method:///| + replaceAll(slashedName, "::", "/");
+
+		for (name <- fullNames, name.parent == slashedLoc.parent)
+			return name;
+
+		println("warning: problem resolving method name \"" + toString(e) + "\"");
+		return |java+method:///| + "unresolvable";
+
+	}
+}
+
+bool isFunction(loc artifact) = artifact.scheme == "java+method" || artifact.scheme == "java+constructor";

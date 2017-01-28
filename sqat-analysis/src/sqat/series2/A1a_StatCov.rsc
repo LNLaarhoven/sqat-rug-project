@@ -56,6 +56,7 @@ alias Graph = rel[loc, str, loc];
 
 bool isFunction(loc artifact) 				= artifact.scheme == "java+method" || artifact.scheme == "java+constructor";
 bool isClass(loc artifact) 					= artifact.scheme == "java+class";
+bool isPackage(loc artifact)				= artifact.scheme == "java+package";
 bool isTestAnnotation(set[loc] annotation) 	= |java+interface:///org/junit| in { a.parent | a <- annotation };
 
 bool JCLCall(loc call) = startsWith(call.path, "/java/");
@@ -67,6 +68,18 @@ set[loc] getClassMethods(M3 model, loc class) {
 set[loc] get(M3 model, bool (loc artifact) what) = { artifact.name | artifact <- model@declarations, what(artifact.name) };
 set[loc] getAllClasses(M3 model) = get(model, isClass);
 set[loc] getAllMethods(M3 model) = get(model, isFunction);
+set[loc] getAllPackages(M3 model) = get(model, isPackage);
+
+set[loc] getClassesPerPackage(M3 model, loc package) {
+	set[loc] classes = {};
+
+	for (artifact <- model@containment[package]) {
+		if (isPackage(artifact)) classes += getClassesPerPackage(model, artifact);
+		if (artifact.scheme == "java+compilationUnit") classes += model@containment[artifact];
+	}
+
+	return classes;
+}
 
 set[loc] filterMethods(M3 model, bool testMethods) = { method | method <- get(model, isFunction),
 	testMethods == isTestAnnotation(model@annotations[method]) };
@@ -91,11 +104,18 @@ set[loc] getTestedMethods(M3 model) {
 
 real calculateClassCoverage(M3 model, loc class, set[loc] allTestedMethods) {
 	classMethods = getClassMethods(model, class);
-	return 100 * toReal(size(allTestedMethods & classMethods)) / size(classMethods);
+	return calcPercentage(classMethods & allTestedMethods, classMethods);
+}
+
+real calculatePackageCoverage(M3 model, loc package, set[loc] allTestedMethods) {
+	allPackageMethods = { * getClassMethods(model, class) | class <- getClassesPerPackage(model, package),
+		!hasOnlyTestMethods(model, class) };
+
+	return calcPercentage(allPackageMethods & allTestedMethods, allPackageMethods);
 }
 
 real calculateTotalCoverage(M3 model) {
-	return 100 * toReal(size(getTestedMethods(model))) / size(getNonTestMethods(model));
+	return calcPercentage(getTestedMethods(model), getNonTestMethods(model));
 }
 
 rel[loc, real] calculateTotalCoveragePerClass(M3 model) {
@@ -103,4 +123,21 @@ rel[loc, real] calculateTotalCoveragePerClass(M3 model) {
 	return { <class, calculateClassCoverage(model, class, tested)> | class <- getAllClasses(model),
 		!hasOnlyTestMethods(model, class) };
 }
+
+rel[loc, real] calculateTotalCoveragePerPackage(M3 model) {
+	set[loc] tested = getTestedMethods(model);
+	return { <package, calculatePackageCoverage(model, package, tested)> | package <- getAllPackages(model) };
+}
+
+real calcPercentage(set[loc] testedMethods, set[loc] allMethods) {
+	int testedCount = size(testedMethods);
+	int allCount = size(allMethods);
+
+	if (testedCount == 0 || allCount == 0)
+		return 0.0;
+
+	return 100 * toReal(testedCount) / allCount;
+}
+
+set[loc] nonCoveredMethods(M3 model) = getNonTestMethods(model) - getTestedMethods(model);
 

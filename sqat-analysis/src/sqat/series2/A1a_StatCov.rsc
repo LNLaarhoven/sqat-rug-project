@@ -6,6 +6,7 @@ import analysis::m3::Core;
 import IO;
 import Set;
 import util::Math;
+import String;
 
 /*
 
@@ -57,6 +58,8 @@ bool isFunction(loc artifact) 				= artifact.scheme == "java+method" || artifact
 bool isClass(loc artifact) 					= artifact.scheme == "java+class";
 bool isTestAnnotation(set[loc] annotation) 	= |java+interface:///org/junit| in { a.parent | a <- annotation };
 
+bool JCLCall(loc call) = startsWith(call.path, "/java/");
+
 set[loc] getClassMethods(M3 model, loc class) {
 	return { member | member <- model@containment[class], isFunction(member) };
 }
@@ -77,11 +80,13 @@ bool hasOnlyTestMethods(M3 model, loc class) = size({ m | m <- getClassMethods(m
 set[loc] getTestedMethods(M3 model) {
 	set[loc] tested = getAllTestMethods(model);
 
-	Graph callGraph = { <from, "calls", to> | <from, to> <- model@methodInvocation };
+	Graph callGraph = { <from, "calls", to> | <from, to> <- model@methodInvocation, !JCLCall(to) };
 
-	return solve (tested) {
+	solve (tested) {
 		tested += { * callGraph[method]["calls"] | method <- tested };
 	}
+
+	return tested - getAllTestMethods(model);
 }
 
 real calculateClassCoverage(M3 model, loc class, set[loc] allTestedMethods) {

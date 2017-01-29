@@ -79,7 +79,7 @@ bool validate(loc artifact, Modality m, set[loc] artifacts) {
 }
 
 set[loc] getImports(loc javaFile) = { |java+class:///| + replaceAll(name, ".", "/")
-	| l <- readFileLines(javaFile), /\s*import\s*<name:[\w|\.]*>;/ := l };
+	| l <- readFileLines(javaFile), /\s*import \s*<name:[\w|\.]*>;/ := l };
 
 loc getFileFromDecl(loc artifact, M3 m3) = [ |file:///| + a.path | a <- m3@declarations[artifact] ][0];
 

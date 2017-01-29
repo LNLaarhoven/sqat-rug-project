@@ -43,8 +43,27 @@ Tips
 - use the solve statement to implement your own (custom) transitive closure for reachability.
 
 Questions:
+
 - what methods are not covered at all?
+
+	`nonCoveredMethods(jpacmanM3())` returns all methods which are not covered.
+
 - how do your results compare to the jpacman results in the paper? Has jpacman improved?
+
+	For JPacman, there are multiple results available. The revision of the paper from the syllabus is from 2008
+	and has the results for JPacman version 3.0.3, while the paper that is linked in this block comment is from
+	2009 and has those of JPacman v3.04.
+	
+	At the system level, the results are as follows:
+	
+	Version		Static		Clover		Difference
+	2008		84.53%		90.61%		-6.08%
+	2009		88.06%		93.53%		-5.47%
+	2017		76.11%		70.06%		+6.05%
+	
+	Note that it is likely there are slight differences in the static checker implemented in the study compared
+	to the static checker that we implemented via M3 and Rascal.
+
 - use a third-party coverage tool (e.g. Clover) to compare your results to (explain differences)
 
 

@@ -1,0 +1,9 @@
+
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.Action
+nl.tudelft.jpacman.game.Game cannot depend nl.tudelft.jpacman.ui.BoardPanel
+
+nl.tudelft.jpacman.game.GameFactory must instantiate nl.tudelft.jpacman.SinglePlayerGame
+nl.tudelft.jpacman.level.LevelFactory must instantiate nl.tudelft.jpacman.level.Level
+
+nl.tudelft.jpacman.game.Game::start must invoke nl.tudelft.jpacman.level.Level::start
+nl.tudelft.jpacman.game.Game::stop must invoke nl.tudelft.jpacman.level.Level::stop

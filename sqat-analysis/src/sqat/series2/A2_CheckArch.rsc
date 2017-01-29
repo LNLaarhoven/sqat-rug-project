@@ -59,6 +59,18 @@ Questions
 - how would you test your evaluator of Dicto rules? (sketch a design)
 - come up with 3 rule types that are not currently supported by this version
   of Dicto (and explain why you'd need them). 
+
+	1.	A package Entity type. Currently, only class and method is supported.
+		If we want to make sure the game logic does not depend on the GUI
+		components, then it would be nice that we can simply denote:
+			`jpacman.game.Game cannot depend on jpacman.ui`
+		.. instead of enumerating all subtypes of the jpacman.ui package.
+
+	2.	Method parentheses. Our code does a lookup in the names annotation
+		of the M3 model to attempt to find out the correct method, in
+		case there are multiple overloaded methods. Introducing parentheses
+		in the Dicto syntax would remove the need for this, since obviously
+		the function arguments can then point out which function is meant.
 */
 
 set[Message] eval(start[Dicto] dicto, M3 m3) = eval(dicto.top, m3);
@@ -167,3 +179,16 @@ loc getLoc(Entity e, M3 m3) {
 }
 
 bool isFunction(loc artifact) = artifact.scheme == "java+method" || artifact.scheme == "java+constructor";
+
+M3 testModel() = createM3FromEclipseProject(|project://TestCheckArch/src|);
+test bool mustInheritRule() = size(eval((Rule)`inherit.Sub must inherit inherit.Super`, testModel())) == 0;
+test bool cannotInheritRule() = size(eval((Rule)`inherit.Sub cannot inherit inherit.Super`, testModel())) == 1;
+test bool canOnlyInheritRule() = size(eval((Rule)`inherit.Sub can only inherit inherit.Super`, testModel())) == 0;
+
+test bool mustImportRule() = size(eval((Rule)`testImport.Import must import testImport.ToBeImported`, testModel())) == 0;
+test bool canOnlyImportRule() = size(eval((Rule)`testImport.Import can only import testImport.ToBeImported`, testModel())) == 0;
+test bool cannotImportRule() = size(eval((Rule)`testImport.Import cannot import testImport.ToBeImported`, testModel())) == 1;
+
+test bool mustInvokeRule() = size(eval((Rule)`testImport.Import must invoke testImport.ToBeImported::invokeTest`, testModel())) == 0;
+test bool canOnlyInvokeRule() = size(eval((Rule)`testImport.Import can only invoke testImport.ToBeImported::invokeTest`, testModel())) == 1;
+test bool cannotInvokeRule() = size(eval((Rule)`testImport.Import cannot invoke testImport.ToBeImported::invokeTest`, testModel())) == 1;

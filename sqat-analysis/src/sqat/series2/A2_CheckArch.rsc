@@ -185,6 +185,7 @@ loc getLoc(Entity e, M3 m3) {
 
 bool isFunction(loc artifact) = artifact.scheme == "java+method" || artifact.scheme == "java+constructor";
 
+// Tests
 M3 testModel() = createM3FromEclipseProject(|project://TestCheckArch/src|);
 test bool mustInheritRule() = size(eval((Rule)`inherit.Sub must inherit inherit.Super`, testModel())) == 0;
 test bool cannotInheritRule() = size(eval((Rule)`inherit.Sub cannot inherit inherit.Super`, testModel())) == 1;
@@ -197,3 +198,9 @@ test bool cannotImportRule() = size(eval((Rule)`testImport.Import cannot import 
 test bool mustInvokeRule() = size(eval((Rule)`testImport.Import must invoke testImport.ToBeImported::invokeTest`, testModel())) == 0;
 test bool canOnlyInvokeRule() = size(eval((Rule)`testImport.Import can only invoke testImport.ToBeImported::invokeTest`, testModel())) == 1;
 test bool cannotInvokeRule() = size(eval((Rule)`testImport.Import cannot invoke testImport.ToBeImported::invokeTest`, testModel())) == 1;
+
+test bool mustInstantiate() = size(eval((Rule)`testImport.Import must instantiate testImport.ToBeImported`, testModel())) == 0;
+test bool canOnlyInstantiate() = size(eval((Rule)`testImport.Import can only instantiate testImport.ToBeImported`, testModel())) == 0;
+test bool cannotInstantiate() = size(eval((Rule)`testImport.Import cannot instantiate testImport.ToBeImported`, testModel())) == 1;
+
+test bool methodCannotInstantiate() = size(eval((Rule)`testImport.Import::invocation cannot instantiate testImport.ToBeImported`, testModel())) == 1;

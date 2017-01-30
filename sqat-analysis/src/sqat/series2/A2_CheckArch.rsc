@@ -113,16 +113,21 @@ bool evalInvoke(Entity e1, loc e2, Modality m, M3 m3) {
 }
 
 bool evalInstantiate(Entity e1, Entity e2, Modality m, M3 m3) {
-	set[loc] e2ctors = m3@names[ split(".", toString(e2))[-1] ];
+	set[loc] e2ctors = { ctor | ctor <- m3@names[ split(".", toString(e2))[-1] ], isFunction(ctor) };
 
-	allCtorCalls = { evalInvoke(e1, e, m, m3) | e <- e2ctors};
+	// Check whether the constructors are invoked or not
+	allE2CtorCalls = { evalInvoke(e1, e, (Modality)`must`, m3) | e <- e2ctors};
 
 	switch (toString(m)) {
-		case "must": 		return (false 	| it || i | bool i <- allCtorCalls); // Any of the ctors should be invoked
-		case "cannot": 		return (true 	| it && i | bool i <- allCtorCalls); // None of the ctors should be invoked
+		case "must": 		return (false 	| it || i	| bool i <- allE2CtorCalls); // Any of the ctors should be invoked
+		case "cannot": 		return (true 	| it && !i	| bool i <- allE2CtorCalls); // None of the ctors should be invoked
 		case "may":			return true;
-		case "can only": 	return (false 	| it || i | bool i <- allCtorCalls)
-									&& size(allCtorCalls) == 1;
+		case "can only": {
+			everyOtherCtor = { evalInvoke(e1, e, (Modality)`must`, m3) | <e,_> <- m3@declarations,
+						e.scheme == "java+constructor", e notin e2ctors };
+			return (false | it || i | bool i <- allE2CtorCalls)		// Any of the ctors of entity 2
+				&& (true  | it && !i | bool i <- everyOtherCtor);	// .. and none of the other ctors
+		}
 	}
 
 }
